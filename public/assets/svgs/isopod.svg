@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <ellipse cx="24" cy="26" rx="14" ry="9" fill="#9a3412"/>
+  <ellipse cx="24" cy="25" rx="13" ry="8" fill="#c2410c"/>
+  <line x1="16" y1="26" x2="10" y2="22" stroke="#7c2d12" stroke-width="1"/>
+  <line x1="16" y1="28" x2="9" y2="27" stroke="#7c2d12" stroke-width="1"/>
+  <line x1="16" y1="30" x2="10" y2="33" stroke="#7c2d12" stroke-width="1"/>
+  <line x1="32" y1="26" x2="38" y2="22" stroke="#7c2d12" stroke-width="1"/>
+  <line x1="32" y1="28" x2="39" y2="27" stroke="#7c2d12" stroke-width="1"/>
+  <line x1="32" y1="30" x2="38" y2="33" stroke="#7c2d12" stroke-width="1"/>
+  <ellipse cx="24" cy="22" rx="7" ry="5" fill="#ea580c"/>
+  <circle cx="21" cy="20" r="1.5" fill="#1c1917"/>
+  <circle cx="27" cy="20" r="1.5" fill="#1c1917"/>
+  <line x1="22" y1="18" x2="19" y2="15" stroke="#7c2d12" stroke-width="1"/>
+  <line x1="26" y1="18" x2="29" y2="15" stroke="#7c2d12" stroke-width="1"/>
+  <!-- Segmented body lines -->
+  <line x1="12" y1="24" x2="36" y2="24" stroke="#9a3412" stroke-width="0.5" opacity="0.5"/>
+  <line x1="11" y1="27" x2="37" y2="27" stroke="#9a3412" stroke-width="0.5" opacity="0.5"/>
+  <line x1="12" y1="30" x2="36" y2="30" stroke="#9a3412" stroke-width="0.5" opacity="0.5"/>
+</svg>
