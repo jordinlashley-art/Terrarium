@@ -184,6 +184,20 @@ input[type="range"]::-moz-range-track {
 
 /* ── Scrollbar ──────────────────────────────────────────── */
 
+/* Sidebar */
+.sticky::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sticky::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sticky::-webkit-scrollbar-thumb {
+  background: rgba(100, 200, 255, 0.15);
+  border-radius: 4px;
+}
+
 .log-scroll::-webkit-scrollbar {
   width: 4px;
 }

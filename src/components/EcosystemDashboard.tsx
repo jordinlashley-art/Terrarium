@@ -775,7 +775,10 @@ export default function EcosystemDashboard() {
           </div>
 
           {/* ─── Control Sidebar ─── */}
-          <div className="space-y-4">
+          <div
+            className="space-y-4 sticky top-14 overflow-y-auto"
+            style={{ maxHeight: "calc(100vh - 3.5rem)" }}
+          >
             <EnvironmentPanel
               environment={environment}
               onUpdate={updateEnvironment}
