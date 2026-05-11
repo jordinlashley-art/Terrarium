@@ -1,20 +1,20 @@
 export type PlantSpecies =
-  | "fern"
-  | "moss"
-  | "succulent"
-  | "vine"
-  | "mushroom"
-  | "cactus";
+  | "seagrass"
+  | "kelp"
+  | "coral"
+  | "anemone"
+  | "coralline_algae"
+  | "hornwort";
 
 export type OrganismSpecies =
-  | "isopod"
-  | "springtail"
-  | "snail"
-  | "worm"
-  | "beetle"
-  | "mite";
+  | "clownfish"
+  | "angelfish"
+  | "guppy"
+  | "shrimp"
+  | "crab"
+  | "snail";
 
-export type MoldSeverity = "none" | "mild" | "moderate" | "severe";
+export type AlgaeBloomSeverity = "none" | "mild" | "moderate" | "severe";
 
 export interface Plant {
   id: string;
@@ -26,9 +26,9 @@ export interface Plant {
   age: number;
   isAlive: boolean;
   lightRequirement: number;
-  waterRequirement: number;
-  humidityTolerance: { min: number; max: number };
-  isMoistureSensitive: boolean;
+  nutrientRequirement: number;
+  salinityTolerance: { min: number; max: number };
+  isDelicate: boolean;
 }
 
 export interface Organism {
@@ -40,22 +40,22 @@ export interface Organism {
   wasteProduced: number;
   age: number;
   isAlive: boolean;
-  biomassConsumption: number;
+  foodConsumption: number;
 }
 
 export interface Environment {
   lighting: number;
-  humidity: number;
+  salinity: number;
   temperature: number;
-  waterLevel: number;
+  waterFlow: number;
   oxygenLevel: number;
-  biomass: number;
+  nutrients: number;
+  ammonia: number;
   debris: number;
-  waste: number;
 }
 
-export interface MoldStatus {
-  severity: MoldSeverity;
+export interface AlgaeStatus {
+  severity: AlgaeBloomSeverity;
   affectedEntities: string[];
 }
 
@@ -64,14 +64,14 @@ export interface SimulationStats {
   totalPlantsSpawned: number;
   totalOrganismsSpawned: number;
   totalDeaths: number;
-  moldGrowthEvents: number;
+  algaeBloomEvents: number;
 }
 
 export interface EcosystemState {
   plants: Plant[];
   organisms: Organism[];
   environment: Environment;
-  mold: MoldStatus;
+  algae: AlgaeStatus;
   stats: SimulationStats;
   tick: number;
   isRunning: boolean;
@@ -82,97 +82,97 @@ export interface PlantPreset {
   species: PlantSpecies;
   name: string;
   lightRequirement: number;
-  waterRequirement: number;
-  humidityTolerance: { min: number; max: number };
-  isMoistureSensitive: boolean;
+  nutrientRequirement: number;
+  salinityTolerance: { min: number; max: number };
+  isDelicate: boolean;
 }
 
 export interface OrganismPreset {
   species: OrganismSpecies;
   name: string;
-  biomassConsumption: number;
+  foodConsumption: number;
 }
 
 export const PLANT_PRESETS: Record<PlantSpecies, PlantPreset> = {
-  fern: {
-    species: "fern",
-    name: "Fern",
+  seagrass: {
+    species: "seagrass",
+    name: "Seagrass",
     lightRequirement: 40,
-    waterRequirement: 30,
-    humidityTolerance: { min: 55, max: 95 },
-    isMoistureSensitive: true,
+    nutrientRequirement: 20,
+    salinityTolerance: { min: 28, max: 40 },
+    isDelicate: false,
   },
-  moss: {
-    species: "moss",
-    name: "Moss",
-    lightRequirement: 25,
-    waterRequirement: 25,
-    humidityTolerance: { min: 60, max: 100 },
-    isMoistureSensitive: true,
+  kelp: {
+    species: "kelp",
+    name: "Giant Kelp",
+    lightRequirement: 50,
+    nutrientRequirement: 35,
+    salinityTolerance: { min: 30, max: 38 },
+    isDelicate: false,
   },
-  succulent: {
-    species: "succulent",
-    name: "Succulent",
-    lightRequirement: 70,
-    waterRequirement: 10,
-    humidityTolerance: { min: 10, max: 60 },
-    isMoistureSensitive: false,
+  coral: {
+    species: "coral",
+    name: "Staghorn Coral",
+    lightRequirement: 65,
+    nutrientRequirement: 18,
+    salinityTolerance: { min: 33, max: 40 },
+    isDelicate: true,
   },
-  vine: {
-    species: "vine",
-    name: "Pothos Vine",
-    lightRequirement: 35,
-    waterRequirement: 20,
-    humidityTolerance: { min: 40, max: 85 },
-    isMoistureSensitive: false,
+  anemone: {
+    species: "anemone",
+    name: "Sea Anemone",
+    lightRequirement: 60,
+    nutrientRequirement: 25,
+    salinityTolerance: { min: 32, max: 40 },
+    isDelicate: true,
   },
-  mushroom: {
-    species: "mushroom",
-    name: "Mushroom",
-    lightRequirement: 10,
-    waterRequirement: 35,
-    humidityTolerance: { min: 70, max: 100 },
-    isMoistureSensitive: false,
+  coralline_algae: {
+    species: "coralline_algae",
+    name: "Coralline Algae",
+    lightRequirement: 55,
+    nutrientRequirement: 12,
+    salinityTolerance: { min: 33, max: 40 },
+    isDelicate: true,
   },
-  cactus: {
-    species: "cactus",
-    name: "Cactus",
-    lightRequirement: 90,
-    waterRequirement: 5,
-    humidityTolerance: { min: 5, max: 40 },
-    isMoistureSensitive: false,
+  hornwort: {
+    species: "hornwort",
+    name: "Hornwort",
+    lightRequirement: 30,
+    nutrientRequirement: 28,
+    salinityTolerance: { min: 0, max: 10 },
+    isDelicate: false,
   },
 };
 
 export const ORGANISM_PRESETS: Record<OrganismSpecies, OrganismPreset> = {
-  isopod: {
-    species: "isopod",
-    name: "Isopod",
-    biomassConsumption: 8,
+  clownfish: {
+    species: "clownfish",
+    name: "Clownfish",
+    foodConsumption: 8,
   },
-  springtail: {
-    species: "springtail",
-    name: "Springtail",
-    biomassConsumption: 3,
+  angelfish: {
+    species: "angelfish",
+    name: "Angelfish",
+    foodConsumption: 12,
+  },
+  guppy: {
+    species: "guppy",
+    name: "Guppy",
+    foodConsumption: 4,
+  },
+  shrimp: {
+    species: "shrimp",
+    name: "Cleaner Shrimp",
+    foodConsumption: 5,
+  },
+  crab: {
+    species: "crab",
+    name: "Hermit Crab",
+    foodConsumption: 10,
   },
   snail: {
     species: "snail",
-    name: "Snail",
-    biomassConsumption: 12,
-  },
-  worm: {
-    species: "worm",
-    name: "Earthworm",
-    biomassConsumption: 10,
-  },
-  beetle: {
-    species: "beetle",
-    name: "Beetle",
-    biomassConsumption: 15,
-  },
-  mite: {
-    species: "mite",
-    name: "Soil Mite",
-    biomassConsumption: 4,
+    name: "Nerite Snail",
+    foodConsumption: 6,
   },
 };
