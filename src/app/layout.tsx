@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Terrarium — Ecosystem Simulator",
-  description: "A browser-based terrarium ecosystem simulator",
+  title: "Aquarium — Live Ecosystem Simulator",
+  description: "A browser-based aquarium ecosystem simulator with animated fish, plants, and water chemistry",
 };
 
 export default function RootLayout({

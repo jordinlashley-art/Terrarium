@@ -13,31 +13,31 @@ import {
 } from "@/types/ecosystem";
 
 const INITIAL_ENVIRONMENT: Environment = {
-  lighting: 60,
-  humidity: 55,
-  temperature: 22,
-  waterLevel: 70,
-  oxygenLevel: 50,
-  biomass: 30,
-  debris: 10,
-  waste: 0,
+  lighting: 65,
+  salinity: 35,
+  temperature: 25,
+  waterFlow: 60,
+  oxygenLevel: 70,
+  nutrients: 25,
+  ammonia: 0,
+  debris: 5,
 };
 
 const INITIAL_STATE: EcosystemState = {
   plants: [],
   organisms: [],
   environment: INITIAL_ENVIRONMENT,
-  mold: { severity: "none", affectedEntities: [] },
+  algae: { severity: "none", affectedEntities: [] },
   stats: {
     totalTicks: 0,
     totalPlantsSpawned: 0,
     totalOrganismsSpawned: 0,
     totalDeaths: 0,
-    moldGrowthEvents: 0,
+    algaeBloomEvents: 0,
   },
   tick: 0,
   isRunning: false,
-  log: ["Terrarium initialized. Add plants and organisms to begin."],
+  log: ["Aquarium initialized. Add plants and fish to begin."],
 };
 
 let idCounter = 0;
@@ -49,10 +49,11 @@ function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val));
 }
 
-function calcMoldSeverity(humidity: number) {
-  if (humidity >= 90) return "severe" as const;
-  if (humidity >= 80) return "moderate" as const;
-  if (humidity >= 65) return "mild" as const;
+function calcAlgaeBloom(nutrients: number, ammonia: number) {
+  const stress = nutrients * 0.5 + ammonia * 0.5;
+  if (stress >= 75) return "severe" as const;
+  if (stress >= 55) return "moderate" as const;
+  if (stress >= 35) return "mild" as const;
   return "none" as const;
 }
 
@@ -65,7 +66,7 @@ export function useEcosystemLogic() {
       const env = { ...prev.environment };
       const logs: string[] = [];
 
-      // --- Plants: consume Light + Water → produce Oxygen + Biomass ---
+      // --- Plants: consume Light + Nutrients → produce Oxygen + Biomass ---
       let totalOxygenProduced = 0;
       let totalBiomassProduced = 0;
       let plantDeaths = 0;
@@ -79,47 +80,43 @@ export function useEcosystemLogic() {
           let biomassProduced = plant.biomassProduced;
 
           const lightRatio = clamp(env.lighting / preset.lightRequirement, 0, 1.5);
-          const waterRatio = clamp(env.waterLevel / (preset.waterRequirement + 10), 0, 1.5);
-          const inHumidityRange =
-            env.humidity >= preset.humidityTolerance.min &&
-            env.humidity <= preset.humidityTolerance.max;
+          const nutrientRatio = clamp(env.nutrients / (preset.nutrientRequirement + 5), 0, 1.5);
+          const inSalinityRange =
+            env.salinity >= preset.salinityTolerance.min &&
+            env.salinity <= preset.salinityTolerance.max;
 
-          const photosynthesisRate = Math.min(lightRatio, waterRatio) * 10;
+          const photosynthesisRate = Math.min(lightRatio, nutrientRatio) * 10;
 
-          if (photosynthesisRate > 0) {
+          if (photosynthesisRate > 0 && inSalinityRange) {
             energy = clamp(energy + photosynthesisRate, 0, 100);
             const biomassGain = photosynthesisRate * 0.5;
             biomassProduced += biomassGain;
             totalBiomassProduced += biomassGain;
-            totalOxygenProduced += photosynthesisRate * 0.3;
+            totalOxygenProduced += photosynthesisRate * 0.4;
           }
 
-          // Consume water each tick
-          env.waterLevel = clamp(
-            env.waterLevel - preset.waterRequirement * 0.05,
-            0,
-            100
-          );
+          // Consume nutrients each tick
+          env.nutrients = clamp(env.nutrients - preset.nutrientRequirement * 0.04, 0, 100);
 
-          // Humidity damage for moisture-sensitive species (ferns)
-          if (preset.isMoistureSensitive && env.humidity < preset.humidityTolerance.min) {
-            const dmg = (preset.humidityTolerance.min - env.humidity) * 0.3;
-            health = clamp(health - dmg, 0, 100);
-            logs.push(`${plant.name} suffering from low humidity (${env.humidity.toFixed(0)}%).`);
+          // Salinity out of range damages plants
+          if (!inSalinityRange) {
+            const salinityDmg = preset.isDelicate ? 4 : 2;
+            health = clamp(health - salinityDmg, 0, 100);
+            if (Math.random() < 0.15) {
+              logs.push(`${plant.name} stressed by incorrect salinity (${env.salinity.toFixed(1)} ppt).`);
+            }
           }
 
-          // Out-of-range humidity hurts non-moisture plants too (reversed range)
-          if (!inHumidityRange && !preset.isMoistureSensitive) {
-            health = clamp(health - 2, 0, 100);
+          // Algae bloom damages delicate species
+          if (env.nutrients > 60 && preset.isDelicate) {
+            health = clamp(health - (env.nutrients - 60) * 0.08, 0, 100);
           }
 
-          // Mold damage at high humidity
-          if (env.humidity >= 65) {
-            const moldDmg = (env.humidity - 65) * 0.1;
-            health = clamp(health - moldDmg, 0, 100);
+          // High ammonia damages plants
+          if (env.ammonia > 0.5) {
+            health = clamp(health - env.ammonia * 0.3, 0, 100);
           }
 
-          // Energy drain without sufficient light or water
           if (photosynthesisRate < 3) {
             energy = clamp(energy - 5, 0, 100);
             health = clamp(health - 2, 0, 100);
@@ -130,7 +127,7 @@ export function useEcosystemLogic() {
           const isAlive = health > 0;
           if (!isAlive) {
             plantDeaths++;
-            env.debris = clamp(env.debris + 15, 0, 100);
+            env.debris = clamp(env.debris + 12, 0, 100);
             logs.push(`${plant.name} has died.`);
           }
 
@@ -144,7 +141,7 @@ export function useEcosystemLogic() {
           };
         });
 
-      // --- Organisms: consume Biomass/Debris → produce Waste ---
+      // --- Organisms: consume Biomass → produce Ammonia ---
       let orgDeaths = 0;
       const updatedOrganisms = prev.organisms
         .filter((o) => o.isAlive)
@@ -154,31 +151,41 @@ export function useEcosystemLogic() {
           let energy = org.energy;
           let wasteProduced = org.wasteProduced;
 
-          const availableFood = env.biomass + env.debris;
-          const consumed = Math.min(preset.biomassConsumption, availableFood);
-          const biomassFraction = env.biomass / Math.max(availableFood, 1);
-          const bioConsumed = consumed * biomassFraction;
-          const debrisConsumed = consumed * (1 - biomassFraction);
+          const availableFood = env.nutrients + env.debris;
+          const consumed = Math.min(preset.foodConsumption, availableFood);
+          const nutrientFrac = env.nutrients / Math.max(availableFood, 1);
+          const nutrientConsumed = consumed * nutrientFrac;
+          const debrisConsumed = consumed * (1 - nutrientFrac);
 
-          env.biomass = clamp(env.biomass - bioConsumed, 0, 200);
+          env.nutrients = clamp(env.nutrients - nutrientConsumed, 0, 100);
           env.debris = clamp(env.debris - debrisConsumed, 0, 100);
 
           if (consumed > 0) {
             energy = clamp(energy + consumed * 0.6, 0, 100);
-            const wasteGain = consumed * 0.4;
-            wasteProduced += wasteGain;
-            env.waste = clamp(env.waste + wasteGain, 0, 100);
+            const ammoniaGain = consumed * 0.35;
+            wasteProduced += ammoniaGain;
+            env.ammonia = clamp(env.ammonia + ammoniaGain, 0, 100);
           } else {
             energy = clamp(energy - 8, 0, 100);
             health = clamp(health - 5, 0, 100);
           }
 
-          // High waste damages organisms
-          if (env.waste > 70) {
-            health = clamp(health - 3, 0, 100);
+          // Ammonia poisoning
+          if (env.ammonia > 2) {
+            health = clamp(health - env.ammonia * 0.4, 0, 100);
+            if (env.ammonia > 5 && Math.random() < 0.1) {
+              logs.push(`${org.name} struggling with high ammonia (${env.ammonia.toFixed(1)} ppm).`);
+            }
           }
 
-          // Low energy kills
+          // Oxygen depletion hurts fish
+          if (env.oxygenLevel < 20) {
+            health = clamp(health - 4, 0, 100);
+            if (Math.random() < 0.1) {
+              logs.push(`${org.name} gasping — low oxygen!`);
+            }
+          }
+
           if (energy < 10) {
             health = clamp(health - 5, 0, 100);
           } else {
@@ -188,7 +195,7 @@ export function useEcosystemLogic() {
           const isAlive = health > 0;
           if (!isAlive) {
             orgDeaths++;
-            env.debris = clamp(env.debris + 10, 0, 100);
+            env.debris = clamp(env.debris + 8, 0, 100);
             logs.push(`${org.name} has died.`);
           }
 
@@ -202,75 +209,74 @@ export function useEcosystemLogic() {
           };
         });
 
-      // --- Apply produced resources to environment ---
-      env.oxygenLevel = clamp(env.oxygenLevel + totalOxygenProduced * 0.1, 0, 100);
-      env.biomass = clamp(env.biomass + totalBiomassProduced, 0, 200);
+      // --- Apply produced resources ---
+      env.oxygenLevel = clamp(env.oxygenLevel + totalOxygenProduced * 0.15, 0, 100);
+      env.nutrients = clamp(env.nutrients + totalBiomassProduced * 0.3, 0, 100);
 
-      // Natural oxygen decay
-      env.oxygenLevel = clamp(env.oxygenLevel - 0.5, 0, 100);
+      // Natural oxygen decay from respiration
+      env.oxygenLevel = clamp(env.oxygenLevel - 0.6, 0, 100);
 
-      // Slow water evaporation increases humidity
-      env.humidity = clamp(
-        env.humidity + (env.waterLevel > 50 ? 0.2 : -0.3),
-        0,
-        100
-      );
+      // Water flow increases oxygenation
+      env.oxygenLevel = clamp(env.oxygenLevel + env.waterFlow * 0.01, 0, 100);
 
-      // Waste slowly breaks down into debris
-      if (env.waste > 10) {
-        const decomposed = env.waste * 0.05;
-        env.waste = clamp(env.waste - decomposed, 0, 100);
-        env.debris = clamp(env.debris + decomposed * 0.5, 0, 100);
+      // Nitrification: beneficial bacteria break down ammonia (slowly)
+      if (env.ammonia > 0) {
+        const nitrified = env.ammonia * 0.08;
+        env.ammonia = clamp(env.ammonia - nitrified, 0, 100);
+        env.debris = clamp(env.debris + nitrified * 0.2, 0, 100);
       }
 
-      // --- Mold calculation ---
-      const moldSeverity = calcMoldSeverity(env.humidity);
-      const moldEvents = prev.stats.moldGrowthEvents;
-      let newMoldGrowthEvents = moldEvents;
+      // Debris sinks and decomposes into nutrients slowly
+      if (env.debris > 5) {
+        const decomposed = env.debris * 0.04;
+        env.debris = clamp(env.debris - decomposed, 0, 100);
+        env.nutrients = clamp(env.nutrients + decomposed * 0.4, 0, 100);
+      }
+
+      // --- Algae bloom calculation ---
+      const algaeSeverity = calcAlgaeBloom(env.nutrients, env.ammonia);
+      const prevAlgaeEvents = prev.stats.algaeBloomEvents;
+      let newAlgaeEvents = prevAlgaeEvents;
 
       const affectedEntities: string[] = [];
-      if (moldSeverity !== "none") {
-        const moldDmgFactor =
-          moldSeverity === "severe" ? 5 : moldSeverity === "moderate" ? 3 : 1;
+      if (algaeSeverity !== "none") {
+        const algaeDmgFactor =
+          algaeSeverity === "severe" ? 5 : algaeSeverity === "moderate" ? 3 : 1;
         updatedPlants.forEach((p) => {
-          if (p.isAlive) {
-            p.health = clamp(p.health - moldDmgFactor * 0.5, 0, 100);
+          if (p.isAlive && PLANT_PRESETS[p.species].isDelicate) {
+            p.health = clamp(p.health - algaeDmgFactor * 0.6, 0, 100);
             affectedEntities.push(p.id);
           }
         });
-        if (moldSeverity !== prev.mold.severity) {
-          newMoldGrowthEvents++;
-          logs.push(
-            `Mold growth: ${moldSeverity} (humidity ${env.humidity.toFixed(0)}%).`
-          );
+        if (algaeSeverity !== prev.algae.severity) {
+          newAlgaeEvents++;
+          logs.push(`Algae bloom: ${algaeSeverity} (nutrients ${env.nutrients.toFixed(0)}, NH₃ ${env.ammonia.toFixed(1)}).`);
         }
       }
 
-      const totalDeaths =
-        prev.stats.totalDeaths + plantDeaths + orgDeaths;
+      const totalDeaths = prev.stats.totalDeaths + plantDeaths + orgDeaths;
 
       const newTick = prev.tick + 1;
       if (newTick % 10 === 0) {
-        logs.push(`Tick ${newTick}: ${updatedPlants.filter((p) => p.isAlive).length} plants, ${updatedOrganisms.filter((o) => o.isAlive).length} organisms.`);
+        logs.push(
+          `Tick ${newTick}: ${updatedPlants.filter((p) => p.isAlive).length} plants, ${updatedOrganisms.filter((o) => o.isAlive).length} animals alive.`
+        );
       }
 
-      const combinedLog = [
-        ...logs,
-        ...prev.log,
-      ].slice(0, 50);
+      const combinedLog = [...logs, ...prev.log].slice(0, 50);
 
       return {
         ...prev,
         plants: updatedPlants,
         organisms: updatedOrganisms,
         environment: env,
-        mold: { severity: moldSeverity, affectedEntities },
+        algae: { severity: algaeSeverity, affectedEntities },
         tick: newTick,
         stats: {
           ...prev.stats,
           totalTicks: prev.stats.totalTicks + 1,
           totalDeaths,
-          moldGrowthEvents: newMoldGrowthEvents,
+          algaeBloomEvents: newAlgaeEvents,
         },
         log: combinedLog,
       };
@@ -289,9 +295,9 @@ export function useEcosystemLogic() {
       age: 0,
       isAlive: true,
       lightRequirement: preset.lightRequirement,
-      waterRequirement: preset.waterRequirement,
-      humidityTolerance: preset.humidityTolerance,
-      isMoistureSensitive: preset.isMoistureSensitive,
+      nutrientRequirement: preset.nutrientRequirement,
+      salinityTolerance: preset.salinityTolerance,
+      isDelicate: preset.isDelicate,
     };
 
     setState((prev) => ({
@@ -301,7 +307,7 @@ export function useEcosystemLogic() {
         ...prev.stats,
         totalPlantsSpawned: prev.stats.totalPlantsSpawned + 1,
       },
-      log: [`Added ${plant.name} to terrarium.`, ...prev.log].slice(0, 50),
+      log: [`Added ${plant.name} to aquarium.`, ...prev.log].slice(0, 50),
     }));
   }, []);
 
@@ -316,7 +322,7 @@ export function useEcosystemLogic() {
       wasteProduced: 0,
       age: 0,
       isAlive: true,
-      biomassConsumption: preset.biomassConsumption,
+      foodConsumption: preset.foodConsumption,
     };
 
     setState((prev) => ({
@@ -326,7 +332,7 @@ export function useEcosystemLogic() {
         ...prev.stats,
         totalOrganismsSpawned: prev.stats.totalOrganismsSpawned + 1,
       },
-      log: [`Added ${organism.name} to terrarium.`, ...prev.log].slice(0, 50),
+      log: [`Added ${organism.name} to aquarium.`, ...prev.log].slice(0, 50),
     }));
   }, []);
 
@@ -338,161 +344,129 @@ export function useEcosystemLogic() {
   }, []);
 
   const spawnPreset = useCallback(
-    (presetName: "tropical" | "desert" | "temperate" | "decomposer") => {
+    (presetName: "tropical_reef" | "freshwater" | "cold_water" | "mini_reef") => {
       setState((prev) => {
         const envUpdates: Partial<Environment> = {};
         const newPlants: Plant[] = [];
         const newOrganisms: Organism[] = [];
         const logs: string[] = [];
 
-        if (presetName === "tropical") {
-          envUpdates.humidity = 75;
-          envUpdates.lighting = 65;
+        if (presetName === "tropical_reef") {
+          envUpdates.salinity = 35;
+          envUpdates.lighting = 70;
           envUpdates.temperature = 26;
-          envUpdates.waterLevel = 80;
-          ["fern", "moss", "vine"].forEach((sp) => {
+          envUpdates.waterFlow = 70;
+          ["coral", "anemone", "seagrass"].forEach((sp) => {
             const preset = PLANT_PRESETS[sp as PlantSpecies];
             newPlants.push({
               id: genId("plant"),
               species: sp as PlantSpecies,
               name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              biomassProduced: 0,
-              age: 0,
-              isAlive: true,
+              health: 100, energy: 70, biomassProduced: 0, age: 0, isAlive: true,
               lightRequirement: preset.lightRequirement,
-              waterRequirement: preset.waterRequirement,
-              humidityTolerance: preset.humidityTolerance,
-              isMoistureSensitive: preset.isMoistureSensitive,
+              nutrientRequirement: preset.nutrientRequirement,
+              salinityTolerance: preset.salinityTolerance,
+              isDelicate: preset.isDelicate,
             });
           });
-          ["isopod", "springtail"].forEach((sp) => {
+          ["clownfish", "angelfish"].forEach((sp) => {
             const preset = ORGANISM_PRESETS[sp as OrganismSpecies];
             newOrganisms.push({
               id: genId("org"),
               species: sp as OrganismSpecies,
               name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              wasteProduced: 0,
-              age: 0,
-              isAlive: true,
-              biomassConsumption: preset.biomassConsumption,
+              health: 100, energy: 70, wasteProduced: 0, age: 0, isAlive: true,
+              foodConsumption: preset.foodConsumption,
             });
           });
-          logs.push("Tropical preset spawned: fern, moss, vine + isopods, springtails.");
-        } else if (presetName === "desert") {
-          envUpdates.humidity = 20;
-          envUpdates.lighting = 90;
-          envUpdates.temperature = 32;
-          envUpdates.waterLevel = 20;
-          ["succulent", "cactus"].forEach((sp) => {
-            const preset = PLANT_PRESETS[sp as PlantSpecies];
-            newPlants.push({
-              id: genId("plant"),
-              species: sp as PlantSpecies,
-              name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              biomassProduced: 0,
-              age: 0,
-              isAlive: true,
-              lightRequirement: preset.lightRequirement,
-              waterRequirement: preset.waterRequirement,
-              humidityTolerance: preset.humidityTolerance,
-              isMoistureSensitive: preset.isMoistureSensitive,
-            });
-          });
-          ["mite", "beetle"].forEach((sp) => {
-            const preset = ORGANISM_PRESETS[sp as OrganismSpecies];
-            newOrganisms.push({
-              id: genId("org"),
-              species: sp as OrganismSpecies,
-              name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              wasteProduced: 0,
-              age: 0,
-              isAlive: true,
-              biomassConsumption: preset.biomassConsumption,
-            });
-          });
-          logs.push("Desert preset spawned: succulent, cactus + mites, beetles.");
-        } else if (presetName === "temperate") {
-          envUpdates.humidity = 55;
+          logs.push("Tropical reef preset: coral, anemone, seagrass + clownfish, angelfish.");
+        } else if (presetName === "freshwater") {
+          envUpdates.salinity = 3;
           envUpdates.lighting = 55;
-          envUpdates.temperature = 18;
-          envUpdates.waterLevel = 55;
-          ["vine", "fern"].forEach((sp) => {
+          envUpdates.temperature = 24;
+          envUpdates.waterFlow = 55;
+          ["hornwort", "seagrass"].forEach((sp) => {
             const preset = PLANT_PRESETS[sp as PlantSpecies];
             newPlants.push({
               id: genId("plant"),
               species: sp as PlantSpecies,
               name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              biomassProduced: 0,
-              age: 0,
-              isAlive: true,
+              health: 100, energy: 70, biomassProduced: 0, age: 0, isAlive: true,
               lightRequirement: preset.lightRequirement,
-              waterRequirement: preset.waterRequirement,
-              humidityTolerance: preset.humidityTolerance,
-              isMoistureSensitive: preset.isMoistureSensitive,
+              nutrientRequirement: preset.nutrientRequirement,
+              salinityTolerance: preset.salinityTolerance,
+              isDelicate: preset.isDelicate,
             });
           });
-          ["worm", "snail"].forEach((sp) => {
+          ["guppy", "shrimp"].forEach((sp) => {
             const preset = ORGANISM_PRESETS[sp as OrganismSpecies];
             newOrganisms.push({
               id: genId("org"),
               species: sp as OrganismSpecies,
               name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              wasteProduced: 0,
-              age: 0,
-              isAlive: true,
-              biomassConsumption: preset.biomassConsumption,
+              health: 100, energy: 70, wasteProduced: 0, age: 0, isAlive: true,
+              foodConsumption: preset.foodConsumption,
             });
           });
-          logs.push("Temperate preset spawned: vine, fern + worms, snails.");
-        } else if (presetName === "decomposer") {
-          envUpdates.humidity = 80;
-          envUpdates.lighting = 15;
-          envUpdates.temperature = 20;
-          envUpdates.waterLevel = 70;
-          ["mushroom", "moss"].forEach((sp) => {
+          logs.push("Freshwater preset: hornwort, seagrass + guppies, shrimp.");
+        } else if (presetName === "cold_water") {
+          envUpdates.salinity = 32;
+          envUpdates.lighting = 45;
+          envUpdates.temperature = 14;
+          envUpdates.waterFlow = 80;
+          ["kelp", "coralline_algae"].forEach((sp) => {
             const preset = PLANT_PRESETS[sp as PlantSpecies];
             newPlants.push({
               id: genId("plant"),
               species: sp as PlantSpecies,
               name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              biomassProduced: 0,
-              age: 0,
-              isAlive: true,
+              health: 100, energy: 70, biomassProduced: 0, age: 0, isAlive: true,
               lightRequirement: preset.lightRequirement,
-              waterRequirement: preset.waterRequirement,
-              humidityTolerance: preset.humidityTolerance,
-              isMoistureSensitive: preset.isMoistureSensitive,
+              nutrientRequirement: preset.nutrientRequirement,
+              salinityTolerance: preset.salinityTolerance,
+              isDelicate: preset.isDelicate,
             });
           });
-          ["isopod", "springtail", "worm"].forEach((sp) => {
+          ["crab", "snail"].forEach((sp) => {
             const preset = ORGANISM_PRESETS[sp as OrganismSpecies];
             newOrganisms.push({
               id: genId("org"),
               species: sp as OrganismSpecies,
               name: `${preset.name} #${idCounter}`,
-              health: 100,
-              energy: 70,
-              wasteProduced: 0,
-              age: 0,
-              isAlive: true,
-              biomassConsumption: preset.biomassConsumption,
+              health: 100, energy: 70, wasteProduced: 0, age: 0, isAlive: true,
+              foodConsumption: preset.foodConsumption,
             });
           });
-          logs.push("Decomposer preset spawned: mushroom, moss + isopods, springtails, worms.");
+          logs.push("Cold water preset: kelp, coralline algae + hermit crabs, snails.");
+        } else if (presetName === "mini_reef") {
+          envUpdates.salinity = 36;
+          envUpdates.lighting = 75;
+          envUpdates.temperature = 25;
+          envUpdates.waterFlow = 65;
+          ["coral", "coralline_algae", "anemone"].forEach((sp) => {
+            const preset = PLANT_PRESETS[sp as PlantSpecies];
+            newPlants.push({
+              id: genId("plant"),
+              species: sp as PlantSpecies,
+              name: `${preset.name} #${idCounter}`,
+              health: 100, energy: 70, biomassProduced: 0, age: 0, isAlive: true,
+              lightRequirement: preset.lightRequirement,
+              nutrientRequirement: preset.nutrientRequirement,
+              salinityTolerance: preset.salinityTolerance,
+              isDelicate: preset.isDelicate,
+            });
+          });
+          ["clownfish", "shrimp"].forEach((sp) => {
+            const preset = ORGANISM_PRESETS[sp as OrganismSpecies];
+            newOrganisms.push({
+              id: genId("org"),
+              species: sp as OrganismSpecies,
+              name: `${preset.name} #${idCounter}`,
+              health: 100, energy: 70, wasteProduced: 0, age: 0, isAlive: true,
+              foodConsumption: preset.foodConsumption,
+            });
+          });
+          logs.push("Mini reef preset: coral, coralline algae, anemone + clownfish, shrimp.");
         }
 
         return {
@@ -503,8 +477,7 @@ export function useEcosystemLogic() {
           stats: {
             ...prev.stats,
             totalPlantsSpawned: prev.stats.totalPlantsSpawned + newPlants.length,
-            totalOrganismsSpawned:
-              prev.stats.totalOrganismsSpawned + newOrganisms.length,
+            totalOrganismsSpawned: prev.stats.totalOrganismsSpawned + newOrganisms.length,
           },
           log: [...logs, ...prev.log].slice(0, 50),
         };
@@ -536,7 +509,7 @@ export function useEcosystemLogic() {
       intervalRef.current = null;
     }
     idCounter = 0;
-    setState({ ...INITIAL_STATE, log: ["Terrarium reset."] });
+    setState({ ...INITIAL_STATE, log: ["Aquarium reset."] });
   }, []);
 
   return {

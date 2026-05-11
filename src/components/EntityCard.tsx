@@ -12,7 +12,7 @@ function Bar({ value, fillColor }: { value: number; fillColor: string }) {
   return (
     <div
       className="w-full rounded-full overflow-hidden"
-      style={{ height: "3px", background: "rgba(255,255,255,0.08)" }}
+      style={{ height: "3px", background: "rgba(100,200,255,0.08)" }}
     >
       <div
         className="h-full rounded-full transition-all duration-500"
@@ -27,18 +27,18 @@ function Bar({ value, fillColor }: { value: number; fillColor: string }) {
 }
 
 const SPECIES_EMOJI: Record<string, string> = {
-  fern: "🌿",
-  moss: "🪴",
-  succulent: "🪴",
-  vine: "🍃",
-  mushroom: "🍄",
-  cactus: "🌵",
-  isopod: "🐛",
-  springtail: "🦗",
+  seagrass: "🌿",
+  kelp: "🪸",
+  coral: "🪸",
+  anemone: "🌺",
+  coralline_algae: "🌊",
+  hornwort: "🌿",
+  clownfish: "🐠",
+  angelfish: "🐟",
+  guppy: "🐡",
+  shrimp: "🦐",
+  crab: "🦀",
   snail: "🐌",
-  worm: "🪱",
-  beetle: "🪲",
-  mite: "🔬",
 };
 
 function isPlant(entity: Plant | Organism): entity is Plant {
@@ -46,13 +46,14 @@ function isPlant(entity: Plant | Organism): entity is Plant {
 }
 
 export default function EntityCard({ entity, type }: EntityCardProps) {
-  const emoji = SPECIES_EMOJI[entity.species] ?? (type === "plant" ? "🌱" : "🐾");
+  const emoji =
+    SPECIES_EMOJI[entity.species] ?? (type === "plant" ? "🌿" : "🐟");
 
   const healthColor =
     entity.health > 60
-      ? "#4ade80"
+      ? "#34d399"
       : entity.health > 30
-      ? "#facc15"
+      ? "#fbbf24"
       : "#f87171";
 
   const energyColor =
@@ -65,28 +66,28 @@ export default function EntityCard({ entity, type }: EntityCardProps) {
   const plant = isPlant(entity) ? entity : null;
   const organism = !isPlant(entity) ? entity : null;
 
-  const accentAlive =
+  const bgAlive =
     type === "plant"
-      ? "rgba(20, 70, 38, 0.55)"
-      : "rgba(18, 48, 72, 0.55)";
-  const accentDead = "rgba(15, 15, 15, 0.4)";
+      ? "rgba(0, 55, 35, 0.5)"
+      : "rgba(0, 40, 80, 0.5)";
+  const bgDead = "rgba(10, 10, 20, 0.4)";
   const borderAlive =
     type === "plant"
-      ? "rgba(80, 200, 120, 0.18)"
-      : "rgba(80, 160, 220, 0.18)";
+      ? "rgba(52, 211, 153, 0.18)"
+      : "rgba(56, 189, 248, 0.18)";
   const borderDead = "rgba(255,255,255,0.05)";
 
   return (
     <div
       className="rounded-xl p-3 transition-all duration-300"
       style={{
-        background: entity.isAlive ? accentAlive : accentDead,
+        background: entity.isAlive ? bgAlive : bgDead,
         border: `1px solid ${entity.isAlive ? borderAlive : borderDead}`,
         backdropFilter: "blur(8px)",
-        opacity: entity.isAlive ? 1 : 0.45,
+        opacity: entity.isAlive ? 1 : 0.4,
       }}
     >
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <span
@@ -94,14 +95,17 @@ export default function EntityCard({ entity, type }: EntityCardProps) {
             style={{
               background: entity.isAlive
                 ? type === "plant"
-                  ? "rgba(50,150,80,0.3)"
-                  : "rgba(40,100,180,0.3)"
-                : "rgba(255,255,255,0.05)",
+                  ? "rgba(0, 160, 90, 0.25)"
+                  : "rgba(0, 110, 200, 0.25)"
+                : "rgba(255,255,255,0.04)",
             }}
           >
             {emoji}
           </span>
-          <span className="text-sm font-semibold text-gray-200 truncate leading-tight">
+          <span
+            className="text-sm font-semibold truncate leading-tight"
+            style={{ color: entity.isAlive ? "#c0dff8" : "rgba(150,170,190,0.5)" }}
+          >
             {entity.name}
           </span>
         </div>
@@ -112,19 +116,18 @@ export default function EntityCard({ entity, type }: EntityCardProps) {
               ? {
                   background:
                     type === "plant"
-                      ? "rgba(40,180,90,0.2)"
-                      : "rgba(40,120,200,0.2)",
-                  color:
-                    type === "plant" ? "#4ade80" : "#38bdf8",
+                      ? "rgba(0,180,100,0.18)"
+                      : "rgba(0,130,220,0.18)",
+                  color: type === "plant" ? "#4ade80" : "#38bdf8",
                   border:
                     type === "plant"
-                      ? "1px solid rgba(74,222,128,0.25)"
-                      : "1px solid rgba(56,189,248,0.25)",
+                      ? "1px solid rgba(74,222,128,0.22)"
+                      : "1px solid rgba(56,189,248,0.22)",
                 }
               : {
-                  background: "rgba(200,50,50,0.15)",
+                  background: "rgba(200,50,50,0.14)",
                   color: "#f87171",
-                  border: "1px solid rgba(248,113,113,0.2)",
+                  border: "1px solid rgba(248,113,113,0.18)",
                 }
           }
         >
@@ -132,35 +135,49 @@ export default function EntityCard({ entity, type }: EntityCardProps) {
         </span>
       </div>
 
-      {/* Health / Energy bars */}
+      {/* Bars */}
       <div className="space-y-1.5">
         <div>
-          <div className="flex justify-between text-xs mb-1" style={{ color: "rgba(200,200,200,0.5)" }}>
+          <div
+            className="flex justify-between text-xs mb-1"
+            style={{ color: "rgba(150,200,240,0.45)" }}
+          >
             <span>Health</span>
-            <span style={{ color: healthColor }}>{entity.health.toFixed(0)}%</span>
+            <span style={{ color: healthColor }}>
+              {entity.health.toFixed(0)}%
+            </span>
           </div>
           <Bar value={entity.health} fillColor={healthColor} />
         </div>
         <div>
-          <div className="flex justify-between text-xs mb-1" style={{ color: "rgba(200,200,200,0.5)" }}>
+          <div
+            className="flex justify-between text-xs mb-1"
+            style={{ color: "rgba(150,200,240,0.45)" }}
+          >
             <span>Energy</span>
-            <span style={{ color: energyColor }}>{entity.energy.toFixed(0)}%</span>
+            <span style={{ color: energyColor }}>
+              {entity.energy.toFixed(0)}%
+            </span>
           </div>
           <Bar value={entity.energy} fillColor={energyColor} />
         </div>
       </div>
 
-      {/* Footer meta */}
+      {/* Footer */}
       <div
         className="mt-3 pt-2 flex gap-3 text-xs"
         style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          color: "rgba(160,160,160,0.6)",
+          borderTop: "1px solid rgba(100,200,255,0.06)",
+          color: "rgba(100,160,210,0.45)",
         }}
       >
         <span>Age {entity.age}</span>
-        {plant && <span>+{plant.biomassProduced.toFixed(1)} biomass</span>}
-        {organism && <span>{organism.wasteProduced.toFixed(1)} waste</span>}
+        {plant && (
+          <span>+{plant.biomassProduced.toFixed(1)} biomass</span>
+        )}
+        {organism && (
+          <span>{organism.wasteProduced.toFixed(1)} NH₃</span>
+        )}
       </div>
     </div>
   );
