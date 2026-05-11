@@ -39,6 +39,7 @@ const SPECIES_EMOJI: Record<string, string> = {
   shrimp: "🦐",
   crab: "🦀",
   snail: "🐌",
+  axolotl: "🦎",
 };
 
 function isPlant(entity: Plant | Organism): entity is Plant {

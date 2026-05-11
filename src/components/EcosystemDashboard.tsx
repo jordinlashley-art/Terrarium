@@ -24,9 +24,10 @@ const FISH_EMOJIS: Record<string, string> = {
   shrimp: "🦐",
   crab: "🦀",
   snail: "🐌",
+  axolotl: "🦎",
 };
 
-const BOTTOM_DWELLERS = new Set(["crab", "snail", "shrimp"]);
+const BOTTOM_DWELLERS = new Set(["crab", "snail", "shrimp", "axolotl"]);
 
 const ALGAE_BADGE: Record<AlgaeBloomSeverity, { label: string; style: string }> = {
   none: {

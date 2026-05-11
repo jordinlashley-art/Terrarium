@@ -291,6 +291,15 @@ export default function SpawnPanel({
             borderColor="rgba(134,239,172,0.12)"
             onClick={() => onAddOrganism("snail")}
           />
+          <ShopItem
+            emoji="🦎"
+            label="Axolotl"
+            hint="Freshwater · bottom walker · unique"
+            accentColor="#c084fc"
+            glowColor="rgba(192,132,252,0.18)"
+            borderColor="rgba(192,132,252,0.12)"
+            onClick={() => onAddOrganism("axolotl")}
+          />
         </div>
       </div>
 
