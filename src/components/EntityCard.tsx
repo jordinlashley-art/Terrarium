@@ -28,8 +28,8 @@ function Bar({ value, fillColor }: { value: number; fillColor: string }) {
 
 const SPECIES_EMOJI: Record<string, string> = {
   seagrass: "🌿",
-  kelp: "🪸",
-  coral: "🪸",
+  kelp: "🎋",
+  coral: "🌸",
   anemone: "🌺",
   coralline_algae: "🌊",
   hornwort: "🌿",

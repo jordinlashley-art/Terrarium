@@ -10,8 +10,8 @@ import { AlgaeBloomSeverity, Organism, Plant } from "@/types/ecosystem";
 
 const PLANT_EMOJIS: Record<string, string> = {
   seagrass: "🌿",
-  kelp: "🪸",
-  coral: "🪸",
+  kelp: "🎋",
+  coral: "🌸",
   anemone: "🌺",
   coralline_algae: "🌊",
   hornwort: "🌿",

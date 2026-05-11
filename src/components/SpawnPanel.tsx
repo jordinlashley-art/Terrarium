@@ -190,7 +190,7 @@ export default function SpawnPanel({
             onClick={() => onAddPlant("seagrass")}
           />
           <ShopItem
-            emoji="🪸"
+            emoji="🎋"
             label="Giant Kelp"
             hint="Cold water · high nutrient need"
             accentColor="#34d399"
@@ -199,7 +199,7 @@ export default function SpawnPanel({
             onClick={() => onAddPlant("kelp")}
           />
           <ShopItem
-            emoji="🪸"
+            emoji="🌸"
             label="Staghorn Coral"
             hint="Reef · high light · delicate"
             accentColor="#f9a8d4"
