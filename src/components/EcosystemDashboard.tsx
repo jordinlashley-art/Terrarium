@@ -349,7 +349,7 @@ function AquariumTank({
           zIndex: 9,
         }}
       />
-      {/* Pebble layer */}
+      {/* Pebble layer — CSS only, no emoji */}
       <div
         style={{
           position: "absolute",
@@ -359,24 +359,31 @@ function AquariumTank({
           height: "14px",
           display: "flex",
           alignItems: "flex-end",
-          paddingLeft: "6px",
-          gap: "2px",
-          fontSize: "12px",
+          paddingLeft: "4px",
+          gap: "3px",
           zIndex: 10,
           pointerEvents: "none",
         }}
       >
-        {Array.from({ length: 20 }).map((_, i) => (
-          <span
-            key={i}
-            style={{
-              opacity: 0.5 + (i % 3) * 0.15,
-              fontSize: i % 3 === 0 ? "13px" : "9px",
-            }}
-          >
-            🪨
-          </span>
-        ))}
+        {Array.from({ length: 28 }).map((_, i) => {
+          const w = i % 3 === 0 ? 14 : i % 3 === 1 ? 9 : 11;
+          const h = i % 3 === 0 ? 10 : i % 3 === 1 ? 7 : 8;
+          const opacity = 0.45 + (i % 4) * 0.1;
+          const shade = 80 + (i % 5) * 12;
+          return (
+            <div
+              key={i}
+              style={{
+                width: `${w}px`,
+                height: `${h}px`,
+                borderRadius: "50%",
+                background: `rgb(${shade}, ${shade - 10}, ${shade - 20})`,
+                opacity,
+                flexShrink: 0,
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* Glass left edge */}
