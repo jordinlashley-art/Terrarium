@@ -12,7 +12,8 @@ export type OrganismSpecies =
   | "guppy"
   | "shrimp"
   | "crab"
-  | "snail";
+  | "snail"
+  | "axolotl";
 
 export type AlgaeBloomSeverity = "none" | "mild" | "moderate" | "severe";
 
@@ -174,5 +175,10 @@ export const ORGANISM_PRESETS: Record<OrganismSpecies, OrganismPreset> = {
     species: "snail",
     name: "Nerite Snail",
     foodConsumption: 6,
+  },
+  axolotl: {
+    species: "axolotl",
+    name: "Axolotl",
+    foodConsumption: 9,
   },
 };

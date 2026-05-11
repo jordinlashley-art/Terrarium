@@ -398,7 +398,7 @@ export function useEcosystemLogic() {
               isDelicate: preset.isDelicate,
             });
           });
-          ["guppy", "shrimp"].forEach((sp) => {
+          ["guppy", "shrimp", "axolotl"].forEach((sp) => {
             const preset = ORGANISM_PRESETS[sp as OrganismSpecies];
             newOrganisms.push({
               id: genId("org"),
@@ -408,7 +408,7 @@ export function useEcosystemLogic() {
               foodConsumption: preset.foodConsumption,
             });
           });
-          logs.push("Freshwater preset: hornwort, seagrass + guppies, shrimp.");
+          logs.push("Freshwater preset: hornwort, seagrass + guppies, shrimp, axolotl.");
         } else if (presetName === "cold_water") {
           envUpdates.salinity = 32;
           envUpdates.lighting = 45;
